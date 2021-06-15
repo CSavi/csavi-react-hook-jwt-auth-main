@@ -17,35 +17,25 @@ clearing the Browser Cache / Locally Stored Data — unlike cookie expiry.
 Provides functions:
 1. login(): POST {user, password}; saves JWT to Local Storage;
 2. logout(): removes JWT from Local Storage;
-3. register(): POST {user, password, email};
-4. getCurrentUser(): get stored user info (including JWT); 
+3. getCurrentUser(): get stored user info (including JWT); 
 */
 
 const API_URL = "http://localhost:8080/api/auth/";
+
+const user = "csavi";
 
 /* 
 * tests if storage is available
 * returns true if localStorage is available and false if it's not
 */
-function lsTest(){
-    var test = 'test';
+const lsTest = () => {
     try {
-        localStorage.setItem(test, test);
-        localStorage.removeItem(test);
+        localStorage.setItem("user", user);
+        localStorage.removeItem(user);
         return true;
     } catch(e) {
         return false;
     }
-};
-
-const register = (user, password, email) => {
-    return axios.post(API_URL + 'signup', {
-        user,
-        password,
-        email,
-    })
-    .then((resp) => console.log(resp))
-    .catch((err) => console.log(err));
 };
 
 
@@ -55,11 +45,10 @@ const login = (user, password) => {
         password,
     })
     .then((resp) => {
-        if (resp.data.accessToken) {
+        if (resp.data) {
             // execute lsTest and run script
-            if (!!lsTest()) {
-                localStorage.setItem("user", JSON.stringify(response.data));
-                console.log('localStorage where used'); // log
+            if (!!lsTest && (!localStorage.getItem("user", user))) {
+                localStorage.setItem("user", user);
             } else {
                 document.cookie=`user=${user}; expires=Mon, 28 Jul 2021 12:00:00 UTC`;
                 console.log('Cookie where used'); // log
@@ -74,28 +63,35 @@ const logout = () => {
     if (!!lsTest) {
         localStorage.removeItem("user")
     } else {
-        Session.Abandon();
-        Response.Cookies.Clear();
+        // Todo: Clear session
     }
 };
 
-const getCookie = (user) => {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${user}=`);
-    if (parts.length === 2) return parts.pop().split(';').shift();
-};
+// const getCookie = (user) => {
+//  TODO: parse cookie to get user value
+// };
 
 const getCurrentUser = () => {
     if (!!lsTest) {
-        return JSON.parse(localStorage.getItem("user"));
+        const loggedInUser = localStorage.getItem("user");
+        if (loggedInUser) {
+            const foundUser = JSON.parse(loggedInUser);
+            console.log(foundUser);
+            return foundUser;
+        } else {
+            return localStorage.setItem("user", user);
+        }
+    
     } else {
-        getCookie();
+        // Todo: get cookie data;
+        console.log("Local Storage is not available.")
     }
 };
 
-export default {
-    register,
+const AuthService = {
     login,
     logout,
     getCurrentUser,
 };
+
+export default AuthService;
